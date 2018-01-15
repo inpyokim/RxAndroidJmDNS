@@ -1,11 +1,10 @@
 package com.hoanglm.rxandroidjmdns.utils;
 
-public class SetupServiceException extends RxSocketException {
+public class SetupServiceException extends RxJmDNSException {
     public enum Reason {
         NOT_DETECTED_IP,
         CAN_NOT_SETUP_MULTICAST,
-        SERVER_SETUP_FAILED,
-        DISCONNECTED_SERVICE
+        SERVER_SETUP_FAILED
     }
 
     private Reason reason;

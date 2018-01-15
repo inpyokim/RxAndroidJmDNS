@@ -3,11 +3,9 @@ package com.hoanglm.rxandroidjmdns.connection;
 import android.content.Context;
 
 import com.hoanglm.rxandroidjmdns.utils.RxRetry;
-
-import java.util.List;
+import com.jakewharton.rxrelay.BehaviorRelay;
 
 import javax.inject.Inject;
-import javax.jmdns.ServiceInfo;
 
 import rx.Observable;
 import rx.android.schedulers.AndroidSchedulers;
@@ -17,6 +15,9 @@ public class RxSocketServiceImpl extends RxSocketService {
     @Inject
     ServiceSetup mServiceSetup;
 
+    @Inject
+    BehaviorRelay<RxSocketServiceState> mServiceConnectorState;
+
     private Context mContext;
 
     @Inject
@@ -25,17 +26,9 @@ public class RxSocketServiceImpl extends RxSocketService {
     }
 
     @Override
-    public Observable<Boolean> setup(boolean autoSetup) {
-        return mServiceSetup.getServiceConnectorObservale()
+    public Observable<ServiceConnector> setup(boolean autoSetup) {
+        return mServiceSetup.setupServiceConnection()
                 .retryWhen(new RxRetry(autoSetup))
-                .map(jmDNSService -> true)
-                .observeOn(AndroidSchedulers.mainThread());
-    }
-
-    @Override
-    public Observable<Boolean> restart() {
-        return mServiceSetup.getServiceConnectorObservale()
-                .map(networkService -> networkService.restartService())
                 .observeOn(AndroidSchedulers.mainThread());
     }
 
@@ -45,30 +38,12 @@ public class RxSocketServiceImpl extends RxSocketService {
     }
 
     @Override
-    public Observable<List<ServiceInfo>> getConnectedSockets() {
-        return null; // TODO
-    }
-
-    @Override
-    public Observable<List<ServiceInfo>> getOnConnectedSockets() {
-        return null;// TODO
-    }
-
-    @Override
-    public Observable<List<ServiceInfo>> getOnServiceInfoDiscovery() {
-        return mServiceSetup.getServiceConnectorObservale()
-                .flatMap(networkService -> networkService.getServiceDiscoveredChanged());
-    }
-
-    @Override
     public Observable<RxSocketServiceState> observeServiceStateChanges() {
-        return mServiceSetup.getSharedServiceConnectorWithoutAutoSetup()
-                .flatMap(networkService -> networkService.getOnServiceConnectorState())
-                .distinctUntilChanged().skip(1);
+        return mServiceConnectorState.distinctUntilChanged().skip(1);
     }
 
     @Override
     public RxSocketServiceState getServiceStateChanges() {
-        return mServiceSetup.getServiceConnector().getConnectorState();
+        return mServiceConnectorState.getValue();
     }
 }

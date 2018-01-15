@@ -6,6 +6,7 @@ import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
 import com.hoanglm.rxandroidjmdns.connection.RxSocketService;
+import com.hoanglm.rxandroidjmdns.connection.ServiceConnector;
 import com.hoanglm.rxandroidjmdns.utils.RxJmDNSLog;
 
 import java.util.LinkedList;
@@ -15,13 +16,15 @@ import javax.jmdns.ServiceInfo;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
+import rx.Observable;
 
-public class FrontPageActivity extends Activity {
+public class SetupServiceActivity extends Activity {
     @BindView(R.id.peer_list)
     ListView mPeerListView;
 
     private RxSocketService mRxSocketService;
     private ArrayAdapter<String> adapter;
+    private Observable<ServiceConnector> mServiceConnectorObservale;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -49,11 +52,8 @@ public class FrontPageActivity extends Activity {
                     break;
             }
         });
-        mRxSocketService.setup(true)
-                .subscribe(success -> {
-                    RxJmDNSLog.d("setup service is success %b", success);
-                }, throwable -> RxJmDNSLog.e(throwable, "setup service is failed"));
-        mRxSocketService.getOnServiceInfoDiscovery()
+        mServiceConnectorObservale = mRxSocketService.setup(true);
+        mServiceConnectorObservale.flatMap(serviceConnector -> serviceConnector.getServiceDiscoveredChanged())
                 .subscribe(serviceInfos -> {
                     adapter.clear();
                     for (ServiceInfo info : serviceInfos) {
@@ -71,7 +71,7 @@ public class FrontPageActivity extends Activity {
 
     @OnClick(R.id.ok_button)
     public void okClicked() {
-        mRxSocketService.restart()
+        mServiceConnectorObservale.flatMap(serviceConnector -> serviceConnector.restartService())
                 .doOnSubscribe(() -> findViewById(R.id.ok_button).setEnabled(false))
                 .doOnNext(success -> findViewById(R.id.ok_button).setEnabled(true))
                 .doOnUnsubscribe(() -> findViewById(R.id.ok_button).setEnabled(true))

@@ -7,7 +7,7 @@ import com.hoanglm.rxandroidjmdns.dagger.ServiceScope;
 import com.hoanglm.rxandroidjmdns.network.AndroidWiFiTCPServer;
 import com.hoanglm.rxandroidjmdns.network.TCPServer;
 import com.hoanglm.rxandroidjmdns.utils.RxJmDNSLog;
-import com.hoanglm.rxandroidjmdns.utils.RxSocketException;
+import com.hoanglm.rxandroidjmdns.utils.RxJmDNSException;
 import com.hoanglm.rxandroidjmdns.utils.ServiceSharingAdapter;
 import com.hoanglm.rxandroidjmdns.utils.SetupServiceException;
 
@@ -21,38 +21,21 @@ import rx.subjects.PublishSubject;
 @ServiceScope
 public class ServiceSetup {
     private Context mContext;
-    private Observable<ServiceConnector> mSharedServiceConnector;
     private final PublishSubject<Void> mCancelServiceSubject;
-    private final ServiceConnector mServiceConnector;
+    private final Provider<ServiceConnectorComponent.Builder> mServiceConnectorComponentBuilder;
 
     @Inject
     public ServiceSetup(Context context, Provider<ServiceConnectorComponent.Builder> serviceConnectorComponentBuilder) {
         mContext = context;
-        mSharedServiceConnector = setupServiceConnection();
         mCancelServiceSubject = PublishSubject.create();
-        ServiceConnectorComponent serviceConnectorComponent = serviceConnectorComponentBuilder.get()
-                .serviceConnectorModule(new ServiceConnectorComponent.ServiceConnectorModule())
-                .build();
-        mServiceConnector = serviceConnectorComponent.providerServiceConnector();
-    }
-
-    public Observable<ServiceConnector> getServiceConnectorObservale() {
-        return mSharedServiceConnector;
-    }
-
-    public Observable<ServiceConnector> getSharedServiceConnectorWithoutAutoSetup() {
-        return Observable.just(mServiceConnector);
-    }
-
-    public ServiceConnector getServiceConnector() {
-        return mServiceConnector;
+        mServiceConnectorComponentBuilder = serviceConnectorComponentBuilder;
     }
 
     public void stopService() {
         mCancelServiceSubject.onNext(null);
     }
 
-    private Observable<ServiceConnector> setupServiceConnection() {
+    public Observable<ServiceConnector> setupServiceConnection() {
         return Observable.defer(() -> {
             RxJmDNSLog.i("start setup service connection");
             TCPServer tcpServer;
@@ -60,17 +43,20 @@ public class ServiceSetup {
                 tcpServer = AndroidWiFiTCPServer.build(mContext);
             } catch (Exception e) {
                 RxJmDNSLog.e(e, "setupServiceConnection>>");
-                if (e instanceof RxSocketException) {
+                if (e instanceof RxJmDNSException) {
                     return Observable.error(e);
                 }
                 return Observable.error(new SetupServiceException(SetupServiceException.Reason.SERVER_SETUP_FAILED, "Fail to setup service: " + e.toString()));
             }
-            return Observable.merge(mServiceConnector.startService(tcpServer),
-                    mServiceConnector.asErrorOnlyObservable())
+            ServiceConnectorComponent serviceConnectorComponent = mServiceConnectorComponentBuilder.get()
+                    .serviceConnectorModule(new ServiceConnectorComponent.ServiceConnectorModule())
+                    .build();
+            ServiceConnector serviceConnector = serviceConnectorComponent.providerServiceConnector();
+            return Observable.merge(serviceConnector.startService(tcpServer),
+                    serviceConnector.asErrorOnlyObservable())
                     .takeUntil(mCancelServiceSubject)
-                    .subscribeOn(Schedulers.io())
                     .unsubscribeOn(Schedulers.io())
-                    .doOnUnsubscribe(() -> mServiceConnector.stopService());
+                    .doOnUnsubscribe(() -> serviceConnector.stopService());
         })
                 .compose(new ServiceSharingAdapter())
                 .subscribeOn(Schedulers.io());

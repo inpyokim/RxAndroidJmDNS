@@ -12,9 +12,7 @@ import rx.Observable;
 public interface ServiceConnector {
     Observable<ServiceConnector> startService(TCPServer serviceServer);
     void stopService();
-    boolean restartService();
-    BehaviorRelay<RxSocketService.RxSocketServiceState> getOnServiceConnectorState();
-    RxSocketService.RxSocketServiceState getConnectorState();
+    Observable<Boolean> restartService();
     Observable<ServiceConnector> asErrorOnlyObservable();
     Observable<List<ServiceInfo>> getServiceDiscoveredChanged();
 }

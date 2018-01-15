@@ -7,10 +7,6 @@ import com.hoanglm.rxandroidjmdns.dagger.DaggerRxSocketServiceComponent;
 import com.hoanglm.rxandroidjmdns.dagger.RxSocketServiceComponent;
 import com.hoanglm.rxandroidjmdns.utils.RxJmDNSLog;
 
-import java.util.List;
-
-import javax.jmdns.ServiceInfo;
-
 import rx.Observable;
 
 public abstract class RxSocketService {
@@ -44,17 +40,9 @@ public abstract class RxSocketService {
         RxJmDNSLog.setLogLevel(logLevel);
     }
 
-    public abstract Observable<Boolean> setup(boolean autoSetup);
-
-    public abstract Observable<Boolean> restart();
+    public abstract Observable<ServiceConnector> setup(boolean autoSetup);
 
     public abstract void stop();
-
-    public abstract Observable<List<ServiceInfo>> getConnectedSockets();
-
-    public abstract Observable<List<ServiceInfo>> getOnConnectedSockets();
-
-    public abstract Observable<List<ServiceInfo>> getOnServiceInfoDiscovery();
 
     public abstract Observable<RxSocketService.RxSocketServiceState> observeServiceStateChanges();
 

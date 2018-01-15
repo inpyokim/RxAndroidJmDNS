@@ -1,10 +1,12 @@
 package com.hoanglm.rxandroidjmdns.service;
 
+import com.hoanglm.rxandroidjmdns.connection.DisconnectionRouter;
 import com.hoanglm.rxandroidjmdns.connection.ServiceConnector;
 import com.hoanglm.rxandroidjmdns.connection.RxSocketService;
 import com.hoanglm.rxandroidjmdns.dagger.ServiceConnectorScope;
 import com.hoanglm.rxandroidjmdns.network.TCPClient;
 import com.hoanglm.rxandroidjmdns.network.TCPServer;
+import com.hoanglm.rxandroidjmdns.utils.RxJmDNSDisconnectException;
 import com.hoanglm.rxandroidjmdns.utils.RxJmDNSLog;
 import com.hoanglm.rxandroidjmdns.utils.SetupServiceException;
 import com.jakewharton.rxrelay.BehaviorRelay;
@@ -46,8 +48,8 @@ public class ServiceConnectorImpl implements ServiceConnector {
 
     private final AndroidDNSSetupHook mAndroidDNSSetupHookImpl;
     private final PublishSubject<Void> mCancelPeerRequestSubject;
-    private final PublishRelay<SetupServiceException> mDisconnectionErrorInputRelay; // todo call when wifi turn off or changed or stop
     private final BehaviorRelay<RxSocketService.RxSocketServiceState> mServiceConnectorState;
+    private final DisconnectionRouter mDisconnectionRouter;
     private final Output<List<ServiceInfo>> mServiceDiscoveredOutput;
     private final Func1<SetupServiceException, Observable<?>> errorMapper = new Func1<SetupServiceException, Observable<?>>() {
         @Override
@@ -76,12 +78,15 @@ public class ServiceConnectorImpl implements ServiceConnector {
     private Set<ServiceInfo> mDiscoveredPeers = new TreeSet<>((si1, si2) -> si1.getName().compareTo(si2.getName()));
 
     @Inject
-    public ServiceConnectorImpl(AndroidDNSSetupHook androidDNSSetupHookImpl) {
+    public ServiceConnectorImpl(AndroidDNSSetupHook androidDNSSetupHookImpl,
+                                BehaviorRelay<RxSocketService.RxSocketServiceState> serviceStateBehaviorRelay,
+                                DisconnectionRouter disconnectionRouter) {
         mAndroidDNSSetupHookImpl = androidDNSSetupHookImpl;
         mCancelPeerRequestSubject = PublishSubject.create();
-        mDisconnectionErrorInputRelay = PublishRelay.create();
+        mDisconnectionRouter = disconnectionRouter;
         mServiceDiscoveredOutput = new Output<>();
-        mServiceConnectorState = BehaviorRelay.create(RxSocketService.RxSocketServiceState.READY);
+        mServiceConnectorState = serviceStateBehaviorRelay;
+
     }
 
     @Override
@@ -129,18 +134,19 @@ public class ServiceConnectorImpl implements ServiceConnector {
         mAndroidDNSSetupHookImpl.teardown();
         mCancelPeerRequestSubject.onNext(null);
         mServiceConnectorState.call(RxSocketService.RxSocketServiceState.STOP_SUCCESS);
-        mDisconnectionErrorInputRelay.call(new SetupServiceException(SetupServiceException.Reason.DISCONNECTED_SERVICE, "stop service is called"));
+        mDisconnectionRouter.onDisconnectedException(new RxJmDNSDisconnectException("stop service is called"));
     }
 
     @Override
-    public boolean restartService() {
+    public Observable<Boolean> restartService() {
         if (mJmDNS == null) {
             throw new IllegalStateException("Please call startService() method in the first time");
         }
-        String newId = randomDeviceID();
-        if (newId.equals(mDevId)) {
-            return true;
-        } else {
+        return Observable.defer(() -> {
+            String newId = randomDeviceID();
+            if (newId.equals(mDevId)) {
+                return Observable.just(true);
+            }
             mJmDNS.unregisterService(mServiceInfo);
             mDevId = newId;
             mServiceInfo = ServiceInfo.create(SERVICE_TYPE, mDevId, mServiceServer.listenPort(), "ping pong");
@@ -149,33 +155,20 @@ public class ServiceConnectorImpl implements ServiceConnector {
                 mJmDNS.registerService(mServiceInfo);
                 RxJmDNSLog.d("Identity changed and advertised");
                 mServiceConnectorState.call(RxSocketService.RxSocketServiceState.RESTART_SUCCESS);
-                return true;
+                return Observable.just(true);
             } catch (IOException e) {
                 RxJmDNSLog.e(e, "Cannot change identity");
-                mDisconnectionErrorInputRelay.call(new SetupServiceException(SetupServiceException.Reason.DISCONNECTED_SERVICE, "restart service is failed"));
-                return false;
+                mDisconnectionRouter.onDisconnectedException(new RxJmDNSDisconnectException("restart service is failed"));
+                return Observable.just(false);
             }
-        }
-    }
-
-    @Override
-    public BehaviorRelay<RxSocketService.RxSocketServiceState> getOnServiceConnectorState() {
-        return mServiceConnectorState;
-    }
-
-    @Override
-    public RxSocketService.RxSocketServiceState getConnectorState() {
-        return mServiceConnectorState.getValue();
+        })
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread());
     }
 
     @Override
     public Observable<ServiceConnector> asErrorOnlyObservable() {
-        return mDisconnectionErrorInputRelay.flatMap(new Func1<SetupServiceException, Observable<ServiceConnectorImpl>>() {
-            @Override
-            public Observable<ServiceConnectorImpl> call(SetupServiceException e) {
-                return Observable.error(e);
-            }
-        });
+        return mDisconnectionRouter.asErrorOnlyObservable();
     }
 
     @Override

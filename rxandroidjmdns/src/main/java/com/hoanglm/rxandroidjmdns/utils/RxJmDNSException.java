@@ -1,16 +1,16 @@
 package com.hoanglm.rxandroidjmdns.utils;
 
-public class RxSocketException extends RuntimeException {
+public class RxJmDNSException extends RuntimeException {
 
-    public RxSocketException() {
+    public RxJmDNSException() {
         super();
     }
 
-    public RxSocketException(String message) {
+    public RxJmDNSException(String message) {
         super(message);
     }
 
-    public RxSocketException(Throwable throwable) {
+    public RxJmDNSException(Throwable throwable) {
         super(throwable);
     }
 
