@@ -8,6 +8,8 @@ import android.widget.ListView;
 import com.hoanglm.rxandroidjmdns.connection.RxSocketService;
 import com.hoanglm.rxandroidjmdns.connection.ServiceConnector;
 import com.hoanglm.rxandroidjmdns.utils.RxJmDNSLog;
+import com.trello.rxlifecycle.android.ActivityEvent;
+import com.trello.rxlifecycle.components.RxActivity;
 
 import java.util.LinkedList;
 
@@ -18,7 +20,7 @@ import butterknife.ButterKnife;
 import butterknife.OnClick;
 import rx.Observable;
 
-public class SetupServiceActivity extends Activity {
+public class SetupServiceActivity extends RxActivity {
     @BindView(R.id.peer_list)
     ListView mPeerListView;
 
@@ -40,6 +42,7 @@ public class SetupServiceActivity extends Activity {
         mPeerListView.setAdapter(adapter);
 
         mRxSocketService.observeServiceStateChanges()
+                .compose(bindUntilEvent(ActivityEvent.DESTROY))
                 .subscribe(rxSocketServiceState -> {
                     RxJmDNSLog.d("socket service state %s", rxSocketServiceState.toString());
             switch (rxSocketServiceState) {
@@ -54,10 +57,12 @@ public class SetupServiceActivity extends Activity {
         });
         mServiceConnectorObservale = mRxSocketService.setup(true);
         mServiceConnectorObservale.flatMap(serviceConnector -> serviceConnector.getServiceDiscoveredChanged())
+                .compose(bindUntilEvent(ActivityEvent.DESTROY))
                 .subscribe(serviceInfos -> {
                     adapter.clear();
                     for (ServiceInfo info : serviceInfos) {
-                        adapter.add(info.getName());
+                        RxJmDNSLog.d("found device: %s", info.getName() + " - " + info.getServer());
+                        adapter.add(info.getName() + " - " + info.getServer());
                     }
                     adapter.notifyDataSetChanged();
                 }, throwable -> RxJmDNSLog.e(throwable, "getOnServiceInfoDiscovery>>"));

@@ -50,4 +50,7 @@ dependencies {
     // RxJva
     implementation "io.reactivex:rxandroid:${rxAndroidVersion}"
     implementation "io.reactivex:rxjava:${rxJavaVersion}"
+    implementation "com.trello:rxlifecycle:${rxlifecycleVersion}"
+    implementation "com.trello:rxlifecycle-components:${rxlifecycleVersion}"
+    implementation "com.trello:rxlifecycle-android:${rxlifecycleVersion}"
 }
