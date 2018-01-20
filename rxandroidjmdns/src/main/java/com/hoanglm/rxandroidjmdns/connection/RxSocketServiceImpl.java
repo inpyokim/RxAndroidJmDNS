@@ -12,17 +12,19 @@ import rx.android.schedulers.AndroidSchedulers;
 
 public class RxSocketServiceImpl extends RxSocketService {
 
-    @Inject
-    ServiceSetup mServiceSetup;
+    private final ServiceSetup mServiceSetup;
 
-    @Inject
-    BehaviorRelay<RxSocketServiceState> mServiceConnectorState;
+    private final BehaviorRelay<RxSocketServiceState> mServiceConnectorState;
 
     private Context mContext;
 
     @Inject
-    public RxSocketServiceImpl(final Context context) {
+    public RxSocketServiceImpl(final Context context,
+                               ServiceSetup serviceSetup,
+                               BehaviorRelay<RxSocketServiceState> serviceConnectorState) {
         mContext = context;
+        mServiceSetup = serviceSetup;
+        mServiceConnectorState = serviceConnectorState;
     }
 
     @Override
