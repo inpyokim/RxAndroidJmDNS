@@ -28,7 +28,7 @@ public class RxSocketServiceImpl extends RxSocketService {
     }
 
     @Override
-    public Observable<ServiceConnector> setup(boolean autoSetup) {
+    public Observable<JmDNSConnector> setup(boolean autoSetup) {
         return mServiceSetup.setupServiceConnection()
                 .retryWhen(new RxRetry(autoSetup))
                 .observeOn(AndroidSchedulers.mainThread());

@@ -35,7 +35,7 @@ public class ServiceSetup {
         mCancelServiceSubject.onNext(null);
     }
 
-    public Observable<ServiceConnector> setupServiceConnection() {
+    public Observable<JmDNSConnector> setupServiceConnection() {
         return Observable.defer(() -> {
             RxJmDNSLog.i("start setup service connection");
             TCPServer tcpServer;
@@ -51,12 +51,12 @@ public class ServiceSetup {
             ServiceConnectorComponent serviceConnectorComponent = mServiceConnectorComponentBuilder.get()
                     .serviceConnectorModule(new ServiceConnectorComponent.ServiceConnectorModule())
                     .build();
-            ServiceConnector serviceConnector = serviceConnectorComponent.providerServiceConnector();
-            return Observable.merge(serviceConnector.startService(tcpServer),
-                    serviceConnector.asErrorOnlyObservable())
+            JmDNSConnector jmDNSConnector = serviceConnectorComponent.providerServiceConnector();
+            return Observable.merge(jmDNSConnector.startService(tcpServer),
+                    jmDNSConnector.asErrorOnlyObservable())
                     .takeUntil(mCancelServiceSubject)
                     .unsubscribeOn(Schedulers.io())
-                    .doOnUnsubscribe(() -> serviceConnector.stopService());
+                    .doOnUnsubscribe(() -> jmDNSConnector.stopService());
         })
                 .compose(new ServiceSharingAdapter())
                 .subscribeOn(Schedulers.io());

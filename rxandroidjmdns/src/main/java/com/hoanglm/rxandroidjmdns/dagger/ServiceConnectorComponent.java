@@ -1,9 +1,9 @@
 package com.hoanglm.rxandroidjmdns.dagger;
 
-import com.hoanglm.rxandroidjmdns.connection.ServiceConnector;
+import com.hoanglm.rxandroidjmdns.connection.JmDNSConnector;
 import com.hoanglm.rxandroidjmdns.service.AndroidDNSSetupHook;
 import com.hoanglm.rxandroidjmdns.service.AndroidDNSSetupHookImpl;
-import com.hoanglm.rxandroidjmdns.service.ServiceConnectorImpl;
+import com.hoanglm.rxandroidjmdns.service.JmDNSConnectorImpl;
 
 import dagger.Binds;
 import dagger.Module;
@@ -31,8 +31,8 @@ public interface ServiceConnectorComponent {
 
         @Binds
         @ServiceConnectorScope
-        abstract ServiceConnector bindServiceConnector(ServiceConnectorImpl serviceConnectorImpl);
+        abstract JmDNSConnector bindServiceConnector(JmDNSConnectorImpl serviceConnectorImpl);
     }
 
-    ServiceConnector providerServiceConnector();
+    JmDNSConnector providerServiceConnector();
 }

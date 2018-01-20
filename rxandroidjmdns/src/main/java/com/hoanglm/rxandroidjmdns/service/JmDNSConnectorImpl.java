@@ -1,7 +1,7 @@
 package com.hoanglm.rxandroidjmdns.service;
 
 import com.hoanglm.rxandroidjmdns.connection.DisconnectionRouter;
-import com.hoanglm.rxandroidjmdns.connection.ServiceConnector;
+import com.hoanglm.rxandroidjmdns.connection.JmDNSConnector;
 import com.hoanglm.rxandroidjmdns.connection.RxSocketService;
 import com.hoanglm.rxandroidjmdns.dagger.ServiceConnectorScope;
 import com.hoanglm.rxandroidjmdns.network.TCPClient;
@@ -31,7 +31,7 @@ import rx.schedulers.Schedulers;
 import rx.subjects.PublishSubject;
 
 @ServiceConnectorScope
-public class ServiceConnectorImpl implements ServiceConnector {
+public class JmDNSConnectorImpl implements JmDNSConnector {
     /**
      * If no identity is provided, a generic one is used.
      */
@@ -78,9 +78,9 @@ public class ServiceConnectorImpl implements ServiceConnector {
     private Set<ServiceInfo> mDiscoveredPeers = new TreeSet<>((si1, si2) -> si1.getName().compareTo(si2.getName()));
 
     @Inject
-    public ServiceConnectorImpl(AndroidDNSSetupHook androidDNSSetupHookImpl,
-                                BehaviorRelay<RxSocketService.RxSocketServiceState> serviceStateBehaviorRelay,
-                                DisconnectionRouter disconnectionRouter) {
+    public JmDNSConnectorImpl(AndroidDNSSetupHook androidDNSSetupHookImpl,
+                              BehaviorRelay<RxSocketService.RxSocketServiceState> serviceStateBehaviorRelay,
+                              DisconnectionRouter disconnectionRouter) {
         mAndroidDNSSetupHookImpl = androidDNSSetupHookImpl;
         mCancelPeerRequestSubject = PublishSubject.create();
         mDisconnectionRouter = disconnectionRouter;
@@ -90,7 +90,7 @@ public class ServiceConnectorImpl implements ServiceConnector {
     }
 
     @Override
-    public Observable<ServiceConnector> startService(TCPServer serviceServer) {
+    public Observable<JmDNSConnector> startService(TCPServer serviceServer) {
         mServiceServer = serviceServer;
         // Call the setup stub
         if (!mAndroidDNSSetupHookImpl.setup()) {
@@ -111,7 +111,7 @@ public class ServiceConnectorImpl implements ServiceConnector {
             mServiceConnectorState.call(RxSocketService.RxSocketServiceState.SETUP_SUCCESS);
             return Observable.just(this);
         } catch (IOException e) {
-            RxJmDNSLog.e(e, "ServiceConnectorImpl>> can not setup multicast");
+            RxJmDNSLog.e(e, "JmDNSConnectorImpl>> can not setup multicast");
             throw new SetupServiceException(SetupServiceException.Reason.CAN_NOT_SETUP_MULTICAST, "Error multicast setup");
         }
     }
@@ -167,7 +167,7 @@ public class ServiceConnectorImpl implements ServiceConnector {
     }
 
     @Override
-    public Observable<ServiceConnector> asErrorOnlyObservable() {
+    public Observable<JmDNSConnector> asErrorOnlyObservable() {
         return mDisconnectionRouter.asErrorOnlyObservable();
     }
 

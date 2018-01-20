@@ -40,7 +40,7 @@ public abstract class RxSocketService {
         RxJmDNSLog.setLogLevel(logLevel);
     }
 
-    public abstract Observable<ServiceConnector> setup(boolean autoSetup);
+    public abstract Observable<JmDNSConnector> setup(boolean autoSetup);
 
     public abstract void stop();
 

@@ -1,12 +1,11 @@
 package com.hoanglm.rxandroidjmdns;
 
-import android.app.Activity;
 import android.os.Bundle;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
 import com.hoanglm.rxandroidjmdns.connection.RxSocketService;
-import com.hoanglm.rxandroidjmdns.connection.ServiceConnector;
+import com.hoanglm.rxandroidjmdns.connection.JmDNSConnector;
 import com.hoanglm.rxandroidjmdns.utils.RxJmDNSLog;
 import com.trello.rxlifecycle.android.ActivityEvent;
 import com.trello.rxlifecycle.components.RxActivity;
@@ -26,7 +25,7 @@ public class SetupServiceActivity extends RxActivity {
 
     private RxSocketService mRxSocketService;
     private ArrayAdapter<String> adapter;
-    private Observable<ServiceConnector> mServiceConnectorObservale;
+    private Observable<JmDNSConnector> mServiceConnectorObservale;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
