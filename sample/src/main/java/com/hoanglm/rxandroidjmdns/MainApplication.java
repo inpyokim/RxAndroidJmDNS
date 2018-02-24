@@ -2,7 +2,7 @@ package com.hoanglm.rxandroidjmdns;
 
 import android.app.Application;
 
-import com.hoanglm.rxandroidjmdns.connection.RxSocketService;
+import com.hoanglm.rxandroidjmdns.jmdns_service.RxSocketService;
 import com.hoanglm.rxandroidjmdns.utils.RxJmDNSLog;
 
 /**

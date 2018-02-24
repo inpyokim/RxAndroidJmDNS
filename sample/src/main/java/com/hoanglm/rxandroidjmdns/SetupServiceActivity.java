@@ -1,16 +1,20 @@
 package com.hoanglm.rxandroidjmdns;
 
 import android.os.Bundle;
+import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
-import com.hoanglm.rxandroidjmdns.connection.RxSocketService;
-import com.hoanglm.rxandroidjmdns.connection.JmDNSConnector;
+import com.hoanglm.rxandroidjmdns.jmdns_service.RxSocketService;
+import com.hoanglm.rxandroidjmdns.jmdns_service.JmDNSConnector;
 import com.hoanglm.rxandroidjmdns.utils.RxJmDNSLog;
 import com.trello.rxlifecycle.android.ActivityEvent;
 import com.trello.rxlifecycle.components.RxActivity;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.List;
 
 import javax.jmdns.ServiceInfo;
 
@@ -26,6 +30,7 @@ public class SetupServiceActivity extends RxActivity {
     private RxSocketService mRxSocketService;
     private ArrayAdapter<String> adapter;
     private Observable<JmDNSConnector> mServiceConnectorObservale;
+    private List<ServiceInfo> mServiceInfo;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -39,6 +44,16 @@ public class SetupServiceActivity extends RxActivity {
                 android.R.layout.simple_list_item_1,
                 new LinkedList<>());
         mPeerListView.setAdapter(adapter);
+        mServiceInfo = new ArrayList<>();
+
+        mPeerListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                ServiceInfo info = mServiceInfo.get(position);
+                String ipAddress = info.getInetAddresses()[0].getHostAddress();
+                startActivity(DeviceActivity.intent(SetupServiceActivity.this, ipAddress, info.getPort()));
+            }
+        });
 
         mRxSocketService.observeServiceStateChanges()
                 .compose(bindUntilEvent(ActivityEvent.DESTROY))
@@ -59,9 +74,11 @@ public class SetupServiceActivity extends RxActivity {
                 .compose(bindUntilEvent(ActivityEvent.DESTROY))
                 .subscribe(serviceInfos -> {
                     adapter.clear();
+                    mServiceInfo.clear();
                     for (ServiceInfo info : serviceInfos) {
                         RxJmDNSLog.d("found device: %s", info.getName() + " - " + info.getServer());
-                        adapter.add(info.getName() + " - " + info.getServer());
+                        adapter.add(info.getInet4Addresses()[0] + " - " + info.getPort());
+                        mServiceInfo.add(info);
                     }
                     adapter.notifyDataSetChanged();
                 }, throwable -> RxJmDNSLog.e(throwable, "getOnServiceInfoDiscovery>>"));
