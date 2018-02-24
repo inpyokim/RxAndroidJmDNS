@@ -1,12 +1,17 @@
 package com.hoanglm.rxandroidjmdns.dagger;
 
-import com.hoanglm.rxandroidjmdns.connection.JmDNSConnector;
-import com.hoanglm.rxandroidjmdns.service.AndroidDNSSetupHook;
-import com.hoanglm.rxandroidjmdns.service.AndroidDNSSetupHookImpl;
-import com.hoanglm.rxandroidjmdns.service.JmDNSConnectorImpl;
+import com.hoanglm.rxandroidjmdns.jmdns_service.JmDNSConnector;
+import com.hoanglm.rxandroidjmdns.jmdns_service.AndroidDNSSetupHook;
+import com.hoanglm.rxandroidjmdns.jmdns_service.AndroidDNSSetupHookImpl;
+import com.hoanglm.rxandroidjmdns.jmdns_service.JmDNSConnectorImpl;
+import com.hoanglm.rxandroidjmdns.socket_device.connection.DisconnectionRouter;
+
+import java.util.HashMap;
+import java.util.Map;
 
 import dagger.Binds;
 import dagger.Module;
+import dagger.Provides;
 import dagger.Subcomponent;
 
 @ServiceConnectorScope
@@ -18,7 +23,7 @@ public interface ServiceConnectorComponent {
         Builder serviceConnectorModule(ServiceConnectorModule module);
     }
 
-    @Module
+    @Module(subcomponents = RxSocketDeviceComponent.class)
     class ServiceConnectorModule {
 
     }

@@ -1,4 +1,4 @@
-package com.hoanglm.rxandroidjmdns.connection;
+package com.hoanglm.rxandroidjmdns.jmdns_service;
 
 import android.content.Context;
 
@@ -8,6 +8,7 @@ import com.hoanglm.rxandroidjmdns.network.AndroidWiFiTCPServer;
 import com.hoanglm.rxandroidjmdns.network.TCPServer;
 import com.hoanglm.rxandroidjmdns.utils.RxJmDNSLog;
 import com.hoanglm.rxandroidjmdns.utils.RxJmDNSException;
+import com.hoanglm.rxandroidjmdns.utils.SchedulerProvider;
 import com.hoanglm.rxandroidjmdns.utils.ServiceSharingAdapter;
 import com.hoanglm.rxandroidjmdns.utils.SetupServiceException;
 
@@ -23,12 +24,16 @@ public class ServiceSetup {
     private Context mContext;
     private final PublishSubject<Void> mCancelServiceSubject;
     private final Provider<ServiceConnectorComponent.Builder> mServiceConnectorComponentBuilder;
+    private final SchedulerProvider mSchedulerProvider;
 
     @Inject
-    public ServiceSetup(Context context, Provider<ServiceConnectorComponent.Builder> serviceConnectorComponentBuilder) {
+    public ServiceSetup(Context context,
+                        SchedulerProvider schedulerProvider,
+                        Provider<ServiceConnectorComponent.Builder> serviceConnectorComponentBuilder) {
         mContext = context;
         mCancelServiceSubject = PublishSubject.create();
         mServiceConnectorComponentBuilder = serviceConnectorComponentBuilder;
+        mSchedulerProvider = schedulerProvider;
     }
 
     public void stopService() {
@@ -55,10 +60,10 @@ public class ServiceSetup {
             return Observable.merge(jmDNSConnector.startService(tcpServer),
                     jmDNSConnector.asErrorOnlyObservable())
                     .takeUntil(mCancelServiceSubject)
-                    .unsubscribeOn(Schedulers.io())
+                    .unsubscribeOn(mSchedulerProvider.io())
                     .doOnUnsubscribe(() -> jmDNSConnector.stopService());
         })
                 .compose(new ServiceSharingAdapter())
-                .subscribeOn(Schedulers.io());
+                .subscribeOn(mSchedulerProvider.io());
     }
 }

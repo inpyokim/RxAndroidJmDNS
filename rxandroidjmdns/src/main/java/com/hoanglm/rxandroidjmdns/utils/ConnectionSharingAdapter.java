@@ -1,26 +1,26 @@
 package com.hoanglm.rxandroidjmdns.utils;
 
-import com.hoanglm.rxandroidjmdns.jmdns_service.JmDNSConnector;
+import com.hoanglm.rxandroidjmdns.socket_device.connection.RxSocketConnection;
 
 import java.util.concurrent.atomic.AtomicReference;
 
 import rx.Observable;
 import rx.functions.Action0;
 
-public class ServiceSharingAdapter implements Observable.Transformer<JmDNSConnector, JmDNSConnector> {
+public class ConnectionSharingAdapter implements Observable.Transformer<RxSocketConnection, RxSocketConnection> {
 
-    private final AtomicReference<Observable<JmDNSConnector>> connectionObservable = new AtomicReference<>();
+    private final AtomicReference<Observable<RxSocketConnection>> connectionObservable = new AtomicReference<>();
 
     @Override
-    public Observable<JmDNSConnector> call(Observable<JmDNSConnector> source) {
+    public Observable<RxSocketConnection> call(Observable<RxSocketConnection> source) {
         synchronized (connectionObservable) {
-            final Observable<JmDNSConnector> rxBleConnectionObservable = connectionObservable.get();
+            final Observable<RxSocketConnection> rxBleConnectionObservable = connectionObservable.get();
 
             if (rxBleConnectionObservable != null) {
                 return rxBleConnectionObservable;
             }
 
-            final Observable<JmDNSConnector> newConnectionObservable = source
+            final Observable<RxSocketConnection> newConnectionObservable = source
                     .doOnUnsubscribe(new Action0() {
                         @Override
                         public void call() {

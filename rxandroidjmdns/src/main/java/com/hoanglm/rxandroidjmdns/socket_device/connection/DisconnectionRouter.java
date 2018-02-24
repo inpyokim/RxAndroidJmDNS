@@ -1,4 +1,4 @@
-package com.hoanglm.rxandroidjmdns.connection;
+package com.hoanglm.rxandroidjmdns.socket_device.connection;
 
 import android.content.Context;
 

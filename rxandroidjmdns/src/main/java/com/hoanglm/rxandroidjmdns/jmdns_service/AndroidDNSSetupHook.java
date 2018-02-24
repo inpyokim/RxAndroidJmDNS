@@ -1,4 +1,4 @@
-package com.hoanglm.rxandroidjmdns.service;
+package com.hoanglm.rxandroidjmdns.jmdns_service;
 
 public interface AndroidDNSSetupHook {
     boolean setup();

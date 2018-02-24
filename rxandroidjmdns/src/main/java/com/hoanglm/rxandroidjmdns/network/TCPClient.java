@@ -1,12 +1,14 @@
 package com.hoanglm.rxandroidjmdns.network;
 
 import com.hoanglm.rxandroidjmdns.utils.RxJmDNSLog;
+import com.hoanglm.rxandroidjmdns.utils.StringUtil;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 
 /**
  * Code for sending a string request to a serve via a TCP client socket and
@@ -54,7 +56,11 @@ public class TCPClient {
      * @return
      * @throws IOException
      */
-    static String sendTo(String str, String host, int port) throws IOException {
+    public static String sendTo(String str, String host, int port) throws IOException {
         return sendTo(str, InetAddress.getByName(host), port);
+    }
+
+    public static String sendTo(byte[] data, String host, int port) throws IOException {
+        return sendTo(StringUtil.convertByteToString(data), InetAddress.getByName(host), port);
     }
 }

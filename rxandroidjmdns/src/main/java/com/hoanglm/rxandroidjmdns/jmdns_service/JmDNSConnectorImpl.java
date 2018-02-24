@@ -1,13 +1,13 @@
-package com.hoanglm.rxandroidjmdns.service;
+package com.hoanglm.rxandroidjmdns.jmdns_service;
 
-import com.hoanglm.rxandroidjmdns.connection.DisconnectionRouter;
-import com.hoanglm.rxandroidjmdns.connection.JmDNSConnector;
-import com.hoanglm.rxandroidjmdns.connection.RxSocketService;
+import com.hoanglm.rxandroidjmdns.socket_device.RxSocketDevice;
+import com.hoanglm.rxandroidjmdns.socket_device.connection.DisconnectionRouter;
 import com.hoanglm.rxandroidjmdns.dagger.ServiceConnectorScope;
 import com.hoanglm.rxandroidjmdns.network.TCPClient;
 import com.hoanglm.rxandroidjmdns.network.TCPServer;
 import com.hoanglm.rxandroidjmdns.utils.RxJmDNSDisconnectException;
 import com.hoanglm.rxandroidjmdns.utils.RxJmDNSLog;
+import com.hoanglm.rxandroidjmdns.utils.SchedulerProvider;
 import com.hoanglm.rxandroidjmdns.utils.SetupServiceException;
 import com.jakewharton.rxrelay.BehaviorRelay;
 import com.jakewharton.rxrelay.PublishRelay;
@@ -50,6 +50,7 @@ public class JmDNSConnectorImpl implements JmDNSConnector {
     private final PublishSubject<Void> mCancelPeerRequestSubject;
     private final BehaviorRelay<RxSocketService.RxSocketServiceState> mServiceConnectorState;
     private final DisconnectionRouter mDisconnectionRouter;
+    private final SchedulerProvider mSchedulerProvider;
     private final Output<List<ServiceInfo>> mServiceDiscoveredOutput;
     private final Func1<SetupServiceException, Observable<?>> errorMapper = new Func1<SetupServiceException, Observable<?>>() {
         @Override
@@ -80,12 +81,14 @@ public class JmDNSConnectorImpl implements JmDNSConnector {
     @Inject
     public JmDNSConnectorImpl(AndroidDNSSetupHook androidDNSSetupHookImpl,
                               BehaviorRelay<RxSocketService.RxSocketServiceState> serviceStateBehaviorRelay,
-                              DisconnectionRouter disconnectionRouter) {
+                              DisconnectionRouter disconnectionRouter,
+                              SchedulerProvider schedulerProvider) {
         mAndroidDNSSetupHookImpl = androidDNSSetupHookImpl;
         mCancelPeerRequestSubject = PublishSubject.create();
         mDisconnectionRouter = disconnectionRouter;
         mServiceDiscoveredOutput = new Output<>();
         mServiceConnectorState = serviceStateBehaviorRelay;
+        mSchedulerProvider = schedulerProvider;
 
     }
 
@@ -162,8 +165,8 @@ public class JmDNSConnectorImpl implements JmDNSConnector {
                 return Observable.just(false);
             }
         })
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread());
+                .subscribeOn(mSchedulerProvider.io())
+                .observeOn(mSchedulerProvider.ui());
     }
 
     @Override
@@ -175,7 +178,12 @@ public class JmDNSConnectorImpl implements JmDNSConnector {
     public Observable<List<ServiceInfo>> getServiceDiscoveredChanged() {
         return withErrorHandling(mServiceDiscoveredOutput)
                 .doOnSubscribe(() -> mServiceDiscoveredOutput.valueRelay.call(getPeers()))
-                .observeOn(AndroidSchedulers.mainThread());
+                .observeOn(mSchedulerProvider.ui());
+    }
+
+    @Override
+    public RxSocketDevice getRxSocketDevice(ServiceInfo serviceInfo) {
+        return null;
     }
 
     private String randomDeviceID() {
@@ -243,8 +251,8 @@ public class JmDNSConnectorImpl implements JmDNSConnector {
                         }
                     })
                     .takeUntil(mCancelPeerRequestSubject)
-                    .subscribeOn(Schedulers.io())
-                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribeOn(mSchedulerProvider.io())
+                    .observeOn(mSchedulerProvider.ui())
                     .subscribe(serviceInfo -> {
                         mDiscoveredPeers.add(serviceInfo);
                         mServiceEventHandler.handle(new ArrayList<>(mDiscoveredPeers));

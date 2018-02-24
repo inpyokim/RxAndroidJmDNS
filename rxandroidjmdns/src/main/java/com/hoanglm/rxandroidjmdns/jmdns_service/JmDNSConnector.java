@@ -1,6 +1,7 @@
-package com.hoanglm.rxandroidjmdns.connection;
+package com.hoanglm.rxandroidjmdns.jmdns_service;
 
 import com.hoanglm.rxandroidjmdns.network.TCPServer;
+import com.hoanglm.rxandroidjmdns.socket_device.RxSocketDevice;
 
 import java.util.List;
 
@@ -14,4 +15,5 @@ public interface JmDNSConnector {
     Observable<Boolean> restartService();
     Observable<JmDNSConnector> asErrorOnlyObservable();
     Observable<List<ServiceInfo>> getServiceDiscoveredChanged();
+    RxSocketDevice getRxSocketDevice(ServiceInfo serviceInfo);
 }

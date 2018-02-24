@@ -1,4 +1,4 @@
-package com.hoanglm.rxandroidjmdns.service;
+package com.hoanglm.rxandroidjmdns.jmdns_service;
 
 import android.content.Context;
 import android.net.wifi.WifiManager;
