@@ -53,8 +53,13 @@ public class RxSocketConnectionImpl implements RxSocketConnection {
                 return Observable.error(e);
             }
         })
-                .compose(RxUtil.timeoutJustFirstEmit(WRITE_TIMEOUT, TimeUnit.MILLISECONDS))
                 .subscribeOn(mSchedulerProvider.io())
+                .compose(RxUtil.timeoutJustFirstEmit(WRITE_TIMEOUT, TimeUnit.MILLISECONDS))
                 .observeOn(mSchedulerProvider.ui());
+    }
+
+    @Override
+    public Observable<byte[]> setupReceivedMessage() {
+        return null;
     }
 }

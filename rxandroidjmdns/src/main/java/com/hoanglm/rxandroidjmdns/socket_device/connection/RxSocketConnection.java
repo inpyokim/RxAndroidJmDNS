@@ -22,5 +22,5 @@ public interface RxSocketConnection {
     }
 
     Observable<byte[]> sendMessage(@NonNull byte[] data);
-    // class hanlde new connection this class: send, received message: this class
+    Observable<byte[]> setupReceivedMessage();
 }

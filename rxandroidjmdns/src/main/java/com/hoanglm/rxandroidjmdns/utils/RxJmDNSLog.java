@@ -103,6 +103,7 @@ public class RxJmDNSLog {
         }
         tag = tag.replace("Impl", "");
         tag = tag.replace("RxJmDNS", "");
+        tag = tag.replace("$$Lambda", "");
         return "RxJmDNS#" + tag.substring(tag.lastIndexOf('.') + 1);
     }
 
