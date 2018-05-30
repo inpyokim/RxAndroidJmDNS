@@ -9,7 +9,6 @@ import java.util.Map;
 import javax.inject.Inject;
 import javax.inject.Provider;
 
-@ServiceScope
 public class RxSocketDeviceProvider {
     private final Map<String, RxSocketDeviceComponent> mCachedRxSocketDeviceComponent;
     private final Provider<RxSocketDeviceComponent.Builder> mRxSocketDeviceBuilder;

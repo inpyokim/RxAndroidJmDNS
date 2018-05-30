@@ -109,7 +109,7 @@ public class JmDNSConnectorImpl implements JmDNSConnector {
             mJmDNS.addServiceTypeListener(new PingPongServiceTypeListener());
 
             // Advertise the local mServiceServer in the network
-            mServiceInfo = ServiceInfo.create(SERVICE_TYPE, mDevId, mServiceServer.listenPort(), "ping pong");
+            mServiceInfo = ServiceInfo.create(SERVICE_TYPE, mDevId, mServiceServer.listenPort(), 0, 0, true, "ping pong");
             mJmDNS.registerService(mServiceInfo);
             mServiceConnectorState.call(RxSocketService.RxSocketServiceState.SETUP_SUCCESS);
             return Observable.just(this);
@@ -232,6 +232,9 @@ public class JmDNSConnectorImpl implements JmDNSConnector {
             if (event.getName().equalsIgnoreCase(mDevId)) {
                 return;
             }
+            if (event.getInfo().getInetAddresses()[0].getHostAddress().equalsIgnoreCase(getHostAddress())) {
+                return;
+            }
             RxJmDNSLog.i("Check can be request to this service");
             Observable.just(REQUEST_MESSAGE)
                     .flatMap(requestMessage -> {
@@ -285,5 +288,15 @@ public class JmDNSConnectorImpl implements JmDNSConnector {
         boolean hasObservers() {
             return valueRelay.hasObservers() || errorRelay.hasObservers();
         }
+    }
+
+    @Override
+    public String getHostAddress() {
+        return mServiceServer.listenAddress().getHostAddress();
+    }
+
+    @Override
+    public int getPort() {
+        return mServiceServer.listenPort();
     }
 }

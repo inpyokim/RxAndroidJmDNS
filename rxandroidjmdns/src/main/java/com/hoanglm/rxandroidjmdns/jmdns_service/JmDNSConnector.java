@@ -16,4 +16,6 @@ public interface JmDNSConnector {
     Observable<JmDNSConnector> asErrorOnlyObservable();
     Observable<List<ServiceInfo>> getServiceDiscoveredChanged();
     RxSocketDevice getRxSocketDevice(ServiceInfo serviceInfo);
+    String getHostAddress();
+    int getPort();
 }

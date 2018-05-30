@@ -1,6 +1,7 @@
 package com.hoanglm.rxandroidjmdns.network;
 
 import com.hoanglm.rxandroidjmdns.utils.RxJmDNSLog;
+import com.jakewharton.rxrelay.PublishRelay;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -16,6 +17,7 @@ public class TCPServer {
     private ServerSocket mServerSocket;
     private Socket mClientSocket;
     private volatile boolean mIsAlive;
+    private final PublishRelay<Request> mTcpServerRequestRelay;
 
     /**
      * @return local port on which the server runs.
@@ -45,10 +47,11 @@ public class TCPServer {
      * @param bindAddress Server IP address.
      * @throws IOException
      */
-    public TCPServer(final InetAddress bindAddress) throws IOException {
+    public TCPServer(final InetAddress bindAddress, PublishRelay<Request> tcpServerRequestRelay) throws IOException {
         // We are not using a predefined port, it will be provided by the system and then advertised to other peers
         mServerSocket = new ServerSocket(0, 10, bindAddress);
         mIsAlive = true;
+        mTcpServerRequestRelay = tcpServerRequestRelay;
         // Requests will be served from a standalone thread
         new Thread(new Runnable() {
             public void run() {
@@ -87,7 +90,9 @@ public class TCPServer {
             outbound = new DataOutputStream(client.getOutputStream());
 
             request = inbound.readUTF();
-            RxJmDNSLog.d("Incoming request " + request);
+            Request requestData = new Request(client.getInetAddress().getHostAddress(), client.getPort(), request);
+            mTcpServerRequestRelay.call(requestData);
+            RxJmDNSLog.d("Incoming request = %s", requestData.toString());
             client.shutdownInput();
 
             response = buildResponse(request);

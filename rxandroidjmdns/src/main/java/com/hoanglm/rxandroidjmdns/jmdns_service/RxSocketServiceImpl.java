@@ -2,10 +2,12 @@ package com.hoanglm.rxandroidjmdns.jmdns_service;
 
 import android.content.Context;
 
+import com.hoanglm.rxandroidjmdns.network.Request;
 import com.hoanglm.rxandroidjmdns.socket_device.RxSocketDevice;
 import com.hoanglm.rxandroidjmdns.utils.RxRetry;
 import com.hoanglm.rxandroidjmdns.utils.SchedulerProvider;
 import com.jakewharton.rxrelay.BehaviorRelay;
+import com.jakewharton.rxrelay.PublishRelay;
 
 import javax.inject.Inject;
 
@@ -17,6 +19,7 @@ public class RxSocketServiceImpl extends RxSocketService {
     private final BehaviorRelay<RxSocketServiceState> mServiceConnectorState;
     private final SchedulerProvider mSchedulerProvider;
     private final RxSocketDeviceProvider mRxSocketDeviceProvider;
+    private final PublishRelay<Request> mTcpServerRequestRelay;
     private Context mContext;
 
     @Inject
@@ -24,12 +27,14 @@ public class RxSocketServiceImpl extends RxSocketService {
                                ServiceSetup serviceSetup,
                                BehaviorRelay<RxSocketServiceState> serviceConnectorState,
                                SchedulerProvider schedulerProvider,
+                               PublishRelay<Request> tcpServerRequestRelay,
                                RxSocketDeviceProvider rxSocketDeviceProvider) {
         mContext = context;
         mServiceSetup = serviceSetup;
         mServiceConnectorState = serviceConnectorState;
         mSchedulerProvider = schedulerProvider;
         mRxSocketDeviceProvider = rxSocketDeviceProvider;
+        mTcpServerRequestRelay = tcpServerRequestRelay;
     }
 
     @Override
@@ -57,5 +62,11 @@ public class RxSocketServiceImpl extends RxSocketService {
     @Override
     public RxSocketDevice getSocketDevice(String ipAddress, int port) {
         return mRxSocketDeviceProvider.getSocketDevice(ipAddress, port);
+    }
+
+    @Override
+    public Observable<Request> setupTCPServerReceivedMessage() {
+        return mTcpServerRequestRelay
+                .observeOn(mSchedulerProvider.ui());
     }
 }

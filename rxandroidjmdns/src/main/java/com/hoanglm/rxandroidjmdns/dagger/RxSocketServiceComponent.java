@@ -4,14 +4,18 @@ import android.content.Context;
 
 import com.hoanglm.rxandroidjmdns.jmdns_service.RxSocketService;
 import com.hoanglm.rxandroidjmdns.jmdns_service.RxSocketServiceImpl;
+import com.hoanglm.rxandroidjmdns.network.Request;
 import com.hoanglm.rxandroidjmdns.socket_device.connection.DisconnectionRouter;
 import com.hoanglm.rxandroidjmdns.utils.AppSchedulerProvider;
 import com.hoanglm.rxandroidjmdns.utils.RxWifiStateObservable;
 import com.hoanglm.rxandroidjmdns.utils.SchedulerProvider;
 import com.jakewharton.rxrelay.BehaviorRelay;
+import com.jakewharton.rxrelay.PublishRelay;
 
 import java.util.HashMap;
 import java.util.Map;
+
+import javax.inject.Singleton;
 
 import dagger.Binds;
 import dagger.Component;
@@ -54,8 +58,15 @@ public interface RxSocketServiceComponent {
         }
 
         @Provides
+        @ServiceScope
         DisconnectionRouter bindDisconnectionRouter(Context context, RxWifiStateObservable stateObservable) {
             return new DisconnectionRouter(context, stateObservable);
+        }
+
+        @Provides
+        @ServiceScope
+        PublishRelay<Request> providerTCPServerRequestRelay() {
+            return PublishRelay.create();
         }
     }
 

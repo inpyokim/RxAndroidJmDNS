@@ -5,6 +5,7 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
+import android.widget.TextView;
 
 import com.hoanglm.rxandroidjmdns.jmdns_service.RxSocketService;
 import com.hoanglm.rxandroidjmdns.jmdns_service.JmDNSConnector;
@@ -26,6 +27,8 @@ import rx.Observable;
 public class SetupServiceActivity extends RxActivity {
     @BindView(R.id.peer_list)
     ListView mPeerListView;
+    @BindView(R.id.host_txt)
+    TextView mHostTextView;
 
     private RxSocketService mRxSocketService;
     private ArrayAdapter<String> adapter;
@@ -82,6 +85,9 @@ public class SetupServiceActivity extends RxActivity {
                     }
                     adapter.notifyDataSetChanged();
                 }, throwable -> RxJmDNSLog.e(throwable, "getOnServiceInfoDiscovery>>"));
+        mServiceConnectorObservale
+                .compose(bindUntilEvent(ActivityEvent.DESTROY))
+                .subscribe(jmDNSConnector -> mHostTextView.setText(jmDNSConnector.getHostAddress() + "-" + jmDNSConnector.getPort()));
     }
 
     @Override
@@ -93,6 +99,7 @@ public class SetupServiceActivity extends RxActivity {
     @OnClick(R.id.ok_button)
     public void okClicked() {
         mServiceConnectorObservale.flatMap(serviceConnector -> serviceConnector.restartService())
+                .compose(bindUntilEvent(ActivityEvent.DESTROY))
                 .doOnSubscribe(() -> findViewById(R.id.ok_button).setEnabled(false))
                 .doOnNext(success -> findViewById(R.id.ok_button).setEnabled(true))
                 .doOnUnsubscribe(() -> findViewById(R.id.ok_button).setEnabled(true))

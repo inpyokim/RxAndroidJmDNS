@@ -73,7 +73,6 @@ public class DeviceActivity extends RxActivity {
             RxJmDNSLog.d("Connection state -> " + rxSocketConnectionState);
             mStatusConnectionTextView.setText(rxSocketConnectionState.toString());
         });
-
     }
 
     private Observable<RxSocketConnection> prepareConnectionObservable() {
@@ -109,6 +108,17 @@ public class DeviceActivity extends RxActivity {
                 .subscribe(data -> {
                     RxJmDNSLog.d("send success " + StringUtil.convertByteToString(data));
                 }, throwable -> RxJmDNSLog.e(throwable, "send failed"));
+    }
+
+    @OnClick(R.id.setup_receive_message_btn)
+    void setupReceiveMessageClicled() {
+        mRxSocketConnectionObservable
+                .doOnSubscribe(() -> RxJmDNSLog.d("setup receive messsage"))
+                .flatMap(rxSocketConnection -> rxSocketConnection.setupReceivedMessage())
+                .compose(bindUntilEvent(ActivityEvent.DESTROY))
+                .subscribe(data -> {
+                    RxJmDNSLog.d("receive data: %s", StringUtil.convertByteToString(data));
+                }, throwable -> RxJmDNSLog.e(throwable, "receive failed"));
     }
 
     private boolean isConnected() {

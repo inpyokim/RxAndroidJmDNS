@@ -3,11 +3,13 @@ package com.hoanglm.rxandroidjmdns.socket_device.connection;
 import android.support.annotation.NonNull;
 
 import com.hoanglm.rxandroidjmdns.dagger.ConnectionScope;
+import com.hoanglm.rxandroidjmdns.network.Request;
 import com.hoanglm.rxandroidjmdns.network.TCPClient;
 import com.hoanglm.rxandroidjmdns.utils.RxJmDNSLog;
 import com.hoanglm.rxandroidjmdns.utils.RxUtil;
 import com.hoanglm.rxandroidjmdns.utils.SchedulerProvider;
 import com.hoanglm.rxandroidjmdns.utils.StringUtil;
+import com.jakewharton.rxrelay.PublishRelay;
 
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
@@ -27,12 +29,15 @@ public class RxSocketConnectionImpl implements RxSocketConnection {
     private final SchedulerProvider mSchedulerProvider;
     private final String ipAddress;
     private final int port;
+    private final PublishRelay<Request> mTcpServerRequestRelay;
 
     @Inject
     public RxSocketConnectionImpl(@Named(IP_ADDRESS) String ipAddress,
-                            @Named(PORT) int port,
-                            SchedulerProvider schedulerProvider) {
+                                  @Named(PORT) int port,
+                                  PublishRelay<Request> tcpServerRequestRelay,
+                                  SchedulerProvider schedulerProvider) {
         mSchedulerProvider = schedulerProvider;
+        mTcpServerRequestRelay = tcpServerRequestRelay;
         this.ipAddress = ipAddress;
         this.port = port;
     }
@@ -60,6 +65,10 @@ public class RxSocketConnectionImpl implements RxSocketConnection {
 
     @Override
     public Observable<byte[]> setupReceivedMessage() {
-        return null;
+        return mTcpServerRequestRelay
+                .filter(request -> request.getIpAddress().equalsIgnoreCase(ipAddress))
+                .filter(request -> request.getPort() == port)
+                .map(request -> StringUtil.convertStringToByte(request.getData()))
+                .observeOn(mSchedulerProvider.ui());
     }
 }

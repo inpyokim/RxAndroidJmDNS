@@ -5,6 +5,7 @@ import android.support.annotation.NonNull;
 
 import com.hoanglm.rxandroidjmdns.dagger.DaggerRxSocketServiceComponent;
 import com.hoanglm.rxandroidjmdns.dagger.RxSocketServiceComponent;
+import com.hoanglm.rxandroidjmdns.network.Request;
 import com.hoanglm.rxandroidjmdns.socket_device.RxSocketDevice;
 import com.hoanglm.rxandroidjmdns.utils.RxJmDNSLog;
 
@@ -50,4 +51,6 @@ public abstract class RxSocketService {
     public abstract RxSocketService.RxSocketServiceState getServiceStateChanges();
 
     public abstract RxSocketDevice getSocketDevice(String ipAddress, int port);
+
+    public abstract Observable<Request> setupTCPServerReceivedMessage();
 }
